@@ -35,7 +35,7 @@ class trainManager(object):
         self.args = args
         self.scaler = amp.GradScaler(enabled=AMP)
         if self.args.loss == 'KDLoss':
-            self.teacher = resnet50(num_classes=args.num_classes)
+            self.teacher = eval(self.args.teacher_path.split('_')[1])(num_classes=args.num_classes)
             ckpt = torch.load(args.teacher_path, map_location='cpu')
             self.teacher.load_state_dict(ckpt['state_dict'])
             del ckpt
@@ -74,17 +74,17 @@ class trainManager(object):
          # self.model.load_state_dict(state_dict, strict=False)
          self.model.load_state_dict(ckp['state_dict'])
          self.optimizer.load_state_dict(ckp['optimizer'])
-         for param in self.optimizer.state.values():
-             if isinstance(param, torch.Tensor):
-                 param.data = param.data.to(args.gpu)
-                 if param._grad is not None:
-                     param._grad.data = param._grad.data.to(args.gpu)
-             elif isinstance(param, dict):
-                 for subparam in param.values():
-                     if isinstance(subparam, torch.Tensor):
-                         subparam.data = subparam.data.to(args.gpu)
-                         if subparam._grad is not None:
-                             subparam._grad.data = subparam._grad.data.to(args.gpu)
+         # for param in self.optimizer.state.values():
+         #     if isinstance(param, torch.Tensor):
+         #         param.data = param.data.to(args.gpu)
+         #         if param._grad is not None:
+         #             param._grad.data = param._grad.data.to(args.gpu)
+         #     elif isinstance(param, dict):
+         #         for subparam in param.values():
+         #             if isinstance(subparam, torch.Tensor):
+         #                 subparam.data = subparam.data.to(args.gpu)
+         #                 if subparam._grad is not None:
+         #                     subparam._grad.data = subparam._grad.data.to(args.gpu)
          self.best_prec = float(ckp['best_accu'])
          if args.reset_epoch:
              args.start_epoch = ckp['epoch']
@@ -176,3 +176,8 @@ class trainManager(object):
                     print('Val: {}/{}| {}'.format(epoch, i, self.meter))
                 tic = time.time()
         return self.meter.top1.avg, self.meter.losses.avg
+
+    def inference(self):
+        start_time = time.time()
+        val_accu, val_loss = self.validate(0)
+        print('Best accuracy: {}, time {}'.format(val_accu, time.time() - start_time))

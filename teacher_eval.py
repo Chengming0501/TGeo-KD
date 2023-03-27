@@ -19,6 +19,7 @@ def parse_args():
     parser.add_argument('--train_file', type=str, default='data/cifar100_train.txt')
     parser.add_argument('--val_file', type=str, default='data/cifar100_val.txt')
     parser.add_argument('--file_prefix', type=str, default='/home/xuanli/Data/CIFAR100')
+    parser.add_argument('--write_name', type=str, default='kd')
     parser.add_argument('--batch_size', type=int, default=256)
     parser.add_argument('--device', type=str, choices=['cpu', 'cuda', 'cuda:0', 'cuda:1'], default='cuda:1')
     parser.add_argument('--num_workers', type=int, default=8)
@@ -50,7 +51,7 @@ def inference(model, dloader, mode):
     meter = Meter_cls()
     metric = accuracy
     dloader = tqdm(dloader)
-    f = open(f'data/cifar100_{mode}_kd.txt', 'w')
+    f = open(f'data/cifar100_{mode}_{args.write_name}.txt', 'w')
     for i, data in enumerate(dloader):
         input_ = data['x'].to(args.device)  # batch, 3, 256, 256
         target = data['y'].to(args.device)
@@ -65,7 +66,7 @@ def inference(model, dloader, mode):
         for j in range(len(probs)):
             prob = probs[j].cpu().numpy().tolist()
             prob = '_'.join(map(str, prob))
-            f.write(f'{files[j]},{prob}\n')
+            f.write(f'{files[j]},{int(target[j])},{prob}\n')
     f.close()
 
 

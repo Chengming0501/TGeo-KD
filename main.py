@@ -12,7 +12,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Knowledge_agreement')
     parser.add_argument('--mode', type=str, required=True, choices=['teacher', 'student'])
     parser.add_argument('--seed', type=int, default=0)
-    parser.add_argument('--model_arch', type=str, required=True, choices=['resnet152', 'resnet50', 'resnet18'])
+    parser.add_argument('--model_arch', type=str, required=True, choices=['resnet34', 'resnet50', 'resnet18'])
     # parser.add_argument('--pretrained', action='store_true')
     # parser.add_argument('--averagemeter', type=str, default='Meter_cls')
     parser.add_argument('--loss', type=str, required=True, choices=['CELoss', 'KDLoss'])
@@ -56,7 +56,7 @@ def parse_args():
         print('Resuming ...')
         args.out_dir = Path(args.resume).parent.parent
     else:
-        time = '{}_{}_{}_{}'.format(args.mode, args.model_arch, args.loss, args.seed) + \
+        time = '{}_{}_{}_{}_'.format(args.mode, args.model_arch, args.loss, args.seed) + \
                datetime.datetime.now().strftime('%m_%d_%H_%M_%S')
         # Make root directory for all outupts
         if not os.path.exists(os.path.join(args.out_dir, time)):
@@ -74,3 +74,4 @@ if __name__ == '__main__':
     print(args.__dict__)
     train_manager = trainManager(args)
     train_manager.fit()
+    # train_manager.inference()
