@@ -3,7 +3,7 @@ import torch
 def SGD(model, lr):
     return torch.optim.SGD(
         model.parameters(), lr=lr, momentum=0.9,
-        weight_decay=0)
+        weight_decay=5e-4)
     '''
     if cfg.model_arch == 'resnet152' or cfg.model_arch == 'resnet18' or cfg.model_arch == 'resnet50':
             ml.append({'params': model._modules['fc'].parameters(), 'lr': cfg.lr})

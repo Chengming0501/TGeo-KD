@@ -7,6 +7,7 @@
 # https://github.com/pytorch/vision/blob/master/torchvision/models/resnet.py
 # (c) YANG, Wei
 # '''
+# import torch
 # import torch.nn as nn
 # import torch.nn.functional as F
 # import math
@@ -126,13 +127,19 @@
 #         self.layer3 = self._make_layer(block, num_filters[3], n, stride=2)
 #         self.avgpool = nn.AvgPool2d(8)
 #         self.fc = nn.Linear(num_filters[3] * block.expansion, num_classes)
+#         self.reweighting = nn.Sequential(
+#                             nn.Linear(num_classes * 9, 128),
+#                             nn.ReLU(inplace=True),
+#                             nn.Linear(128, 1),
+#                             nn.Sigmoid())
+#         self.softmax = nn.Softmax(dim=1)
 #
-#         for m in self.modules():
-#             if isinstance(m, nn.Conv2d):
-#                 nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
-#             elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
-#                 nn.init.constant_(m.weight, 1)
-#                 nn.init.constant_(m.bias, 0)
+#         # for m in self.modules():
+#         #     if isinstance(m, nn.Conv2d):
+#         #         nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+#         #     elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
+#         #         nn.init.constant_(m.weight, 1)
+#         #         nn.init.constant_(m.bias, 0)
 #
 #     def _make_layer(self, block, planes, blocks, stride=1):
 #         downsample = None
@@ -175,7 +182,7 @@
 #
 #         return [bn1, bn2, bn3]
 #
-#     def forward(self, x, is_feat=False, preact=False):
+#     def forward(self, x, teacher=None, gt=None, stats=None):
 #         x = self.conv1(x)
 #         x = self.bn1(x)
 #         x = self.relu(x)  # 32x32
@@ -192,49 +199,54 @@
 #         x = x.view(x.size(0), -1)
 #         f4 = x
 #         x = self.fc(x)
-#
-#         if is_feat:
-#             if preact:
-#                 return [f0, f1_pre, f2_pre, f3_pre, f4], x
-#             else:
-#                 return [f0, f1, f2, f3, f4], x
+#         if teacher is not None and gt is not None:
+#             _x = self.softmax(x)
+#             _t = self.softmax(teacher)
+#             # _x_in = (_x + _t + torch.nn.functional.one_hot(gt, num_classes=100)) / 3
+#             # _x_in = torch.cat([_x, _t, stats, torch.nn.functional.one_hot(gt, num_classes=100)], dim=1)
+#             _g = torch.nn.functional.one_hot(gt, num_classes=100)
+#             _x_in = torch.cat([_x, _t, stats, _g,
+#                                torch.abs(_x - _g), torch.abs(_x - _t), torch.abs(_x - stats),
+#                                (_g - stats) * (_g - _x), (_g - _t) * (_g - _x)], dim=1)
+#             alpha = self.reweighting(_x_in)
+#             return x, alpha
 #         else:
 #             return x
 #
 #
-# def resnet8(**kwargs):
+# def reresnet8(**kwargs):
 #     return ResNet(8, [16, 16, 32, 64], 'basicblock', **kwargs)
 #
 #
-# def resnet14(**kwargs):
+# def reresnet14(**kwargs):
 #     return ResNet(14, [16, 16, 32, 64], 'basicblock', **kwargs)
 #
 #
-# def resnet20(**kwargs):
+# def reresnet20(**kwargs):
 #     return ResNet(20, [16, 16, 32, 64], 'basicblock', **kwargs)
 #
 #
-# def resnet32(**kwargs):
+# def reresnet32(**kwargs):
 #     return ResNet(32, [16, 16, 32, 64], 'basicblock', **kwargs)
 #
 #
-# def resnet44(**kwargs):
+# def reresnet44(**kwargs):
 #     return ResNet(44, [16, 16, 32, 64], 'basicblock', **kwargs)
 #
 #
-# def resnet56(**kwargs):
+# def reresnet56(**kwargs):
 #     return ResNet(56, [16, 16, 32, 64], 'basicblock', **kwargs)
 #
 #
-# def resnet110(**kwargs):
+# def reresnet110(**kwargs):
 #     return ResNet(110, [16, 16, 32, 64], 'basicblock', **kwargs)
 #
 #
-# def resnet8x4(**kwargs):
+# def reresnet8x4(**kwargs):
 #     return ResNet(8, [32, 64, 128, 256], 'basicblock', **kwargs)
 #
 #
-# def resnet32x4(**kwargs):
+# def reresnet32x4(**kwargs):
 #     return ResNet(32, [32, 64, 128, 256], 'basicblock', **kwargs)
 #
 #
@@ -254,9 +266,6 @@
 #             print('pass')
 #         else:
 #             print('warning')
-
-
-
 
 
 
@@ -358,6 +367,12 @@ class ResNet(nn.Module):
         self.conv5_x = self._make_layer(block, 512, num_block[3], 2)
         self.avg_pool = nn.AdaptiveAvgPool2d((1, 1))
         self.fc = nn.Linear(512 * block.expansion, num_classes)
+        self.reweighting = nn.Sequential(
+                    nn.Linear(num_classes * 9, 128),
+                    nn.ReLU(inplace=True),
+                    nn.Linear(128, 1),
+                    nn.Sigmoid())
+        self.softmax = nn.Softmax(dim=1)
 
     def _make_layer(self, block, out_channels, num_blocks, stride):
         """make resnet layers(by layer i didnt mean this 'layer' was the
@@ -384,7 +399,7 @@ class ResNet(nn.Module):
 
         return nn.Sequential(*layers)
 
-    def forward(self, x):
+    def forward(self, x, teacher=None, gt=None, stats=None):
         output = self.conv1(x)
         output = self.conv2_x(output)
         output = self.conv3_x(output)
@@ -393,39 +408,44 @@ class ResNet(nn.Module):
         output = self.avg_pool(output)
         output = output.view(output.size(0), -1)
         output = self.fc(output)
+        if teacher is not None and gt is not None:
+            _x = self.softmax(output)
+            _t = self.softmax(teacher)
+            # _x_in = (_x + _t + torch.nn.functional.one_hot(gt, num_classes=100)) / 3
+            # _x_in = torch.cat([_x, _t, stats, torch.nn.functional.one_hot(gt, num_classes=100)], dim=1)
+            _g = torch.nn.functional.one_hot(gt, num_classes=100)
+            _x_in = torch.cat([_x, _t, stats, _g,
+                               torch.abs(_x - _g), torch.abs(_x - _t), torch.abs(_x - stats),
+                               (_g - stats) * (_g - _x), (_g - _t) * (_g - _x)], dim=1)
+            alpha = self.reweighting(_x_in)
+            return output, alpha
+        else:
+            return output
 
-        return output
-
-def resnet18(num_classes=100):
+def reresnet18(num_classes=100):
     """ return a ResNet 18 object
     """
     return ResNet(BasicBlock, [2, 2, 2, 2], num_classes=num_classes)
 
-def resnet34(num_classes=100):
+def reresnet34(num_classes=100):
     """ return a ResNet 34 object
     """
     return ResNet(BasicBlock, [3, 4, 6, 3], num_classes=num_classes)
 
-def resnet50(num_classes=100):
+def reresnet50(num_classes=100):
     """ return a ResNet 50 object
     """
     return ResNet(BottleNeck, [3, 4, 6, 3], num_classes=num_classes)
 
-def resnet101(num_classes):
+def reresnet101(num_classes):
     """ return a ResNet 101 object
     """
     return ResNet(BottleNeck, [3, 4, 23, 3], num_classes=num_classes)
 
-def resnet152(num_classes):
+def reresnet152(num_classes):
     """ return a ResNet 152 object
     """
     return ResNet(BottleNeck, [3, 8, 36, 3], num_classes=num_classes)
-
-
-
-
-
-
 
 
 
@@ -620,6 +640,13 @@ def resnet152(num_classes):
 #         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
 #         self.fc = nn.Linear(512 * block.expansion, num_classes)
 #
+#         self.reweighting = nn.Sequential(
+#             nn.Linear(num_classes * 9, 128),
+#             self.relu,
+#             nn.Linear(128, 1),
+#             nn.Sigmoid())
+#         self.softmax = nn.Softmax(dim=1)
+#
 #         for m in self.modules():
 #             if isinstance(m, nn.Conv2d):
 #                 nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
@@ -662,7 +689,7 @@ def resnet152(num_classes):
 #
 #         return nn.Sequential(*layers)
 #
-#     def _forward_impl(self, x: Tensor) -> Tensor:
+#     def _forward_impl(self, x: Tensor, teacher, gt, stats) -> Tensor:
 #         # See note [TorchScript super()]
 #         x = self.conv1(x)
 #         x = self.bn1(x)
@@ -677,11 +704,23 @@ def resnet152(num_classes):
 #         x = self.avgpool(x)
 #         x = torch.flatten(x, 1)
 #         x = self.fc(x)
+#         if teacher is not None and gt is not None:
+#             _x = self.softmax(x)
+#             _t = self.softmax(teacher)
+#             # _x_in = (_x + _t + torch.nn.functional.one_hot(gt, num_classes=100)) / 3
+#             # _x_in = torch.cat([_x, _t, stats, torch.nn.functional.one_hot(gt, num_classes=100)], dim=1)
+#             _g = torch.nn.functional.one_hot(gt, num_classes=100)
+#             _x_in = torch.cat([_x, _t, stats, _g,
+#                                torch.abs(_x - _g), torch.abs(_x - _t), torch.abs(_x - stats),
+#                                (_g - stats) * (_g - _x), (_g - _t) * (_g - _x)], dim=1)
+#             # assert _x_in.shape[1] == _x.shape[1] * 3
+#             alpha = self.reweighting(_x_in)
+#             return x, alpha
+#         else:
+#             return x
 #
-#         return x
-#
-#     def forward(self, x: Tensor) -> Tensor:
-#         return self._forward_impl(x)
+#     def forward(self, x: Tensor, teacher=None, gt=None, stats=None) -> Tensor:
+#         return self._forward_impl(x, teacher, gt, stats)
 #
 #
 # def _resnet(

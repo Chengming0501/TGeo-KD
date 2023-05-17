@@ -26,6 +26,8 @@ class MyDataset(Dataset):
         self.img_h = cfg.img_h
         self.img_w = cfg.img_w
         self.mode = mode
+        self.mean = (0.5070751592371323, 0.48654887331495095, 0.4409178433670343)
+        self.std = (0.2673342858792401, 0.2564384629170883, 0.27615047132568404)
         # self.loss = cfg.loss
 
     def train_transform(self, img):
@@ -35,15 +37,16 @@ class MyDataset(Dataset):
         :return:  tensor of img in range 0-1
         """
         # _img = ImageOps.autocontrast(img)
+        img_ = transforms.RandomCrop(32, padding=4)(img)
         img_ = transforms.RandomHorizontalFlip()(img)
-        img_ = transforms.RandomRotation(5, expand=True)(img_)
-        img_ = transforms.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1)(img_)
-        img_ = transforms.RandomPerspective(distortion_scale=0.1)(img_)
-        img_ = transforms.RandomAffine(degrees=0, shear=5)(img_)
-        img_ = transforms.RandomResizedCrop((self.img_h, self.img_w), scale=(0.8, 1.0), ratio=(0.8, 1.2))(img_)
+        img_ = transforms.RandomRotation(15)(img_)
+        # img_ = transforms.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1)(img_)
+        # img_ = transforms.RandomPerspective(distortion_scale=0.1)(img_)
+        # img_ = transforms.RandomAffine(degrees=0, shear=5)(img_)
+        # img_ = transforms.RandomResizedCrop((self.img_h, self.img_w), scale=(0.8, 1.0), ratio=(0.8, 1.2))(img_)
         # img_ = transforms.Resize((self.img_h, self.img_w))(img)
         img_ = transforms.ToTensor()(img_)
-        img_ = transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))(img_)
+        img_ = transforms.Normalize(self.mean, self.std)(img_)
         return img_
 
     def val_transform(self, img):
@@ -52,7 +55,7 @@ class MyDataset(Dataset):
         # _img = ImageOps.autocontrast(img)
         img_ = transforms.Resize((self.img_h, self.img_w))(img)
         img_ = transforms.ToTensor()(img_)
-        img_ = transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))(img_)
+        img_ = transforms.Normalize(self.mean, self.std)(img_)
         return img_
 
     def __getitem__(self, index):

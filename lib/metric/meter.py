@@ -24,14 +24,15 @@ class Meter_cls(object):
         self.topK = AverageMeter()
         self.batch_time = AverageMeter()
         self.data_time = AverageMeter()
+        self.alpha = AverageMeter()
     def reset(self):
         [v.reset() for k, v in vars(self).items()]
     def update(self, **kwargs):
         for k in kwargs.keys():
             getattr(self, k).update(kwargs[k])
     def __repr__(self):
-        return 'loss {:.4f}, top1 {:.4f}, topK {:.4f}, data {:.4f}, batch {:.4f}'.format(
-            self.losses.avg, self.top1.avg, self.topK.avg, self.data_time.avg, self.batch_time.avg
+        return 'loss {:.4f}, top1 {:.4f}, alpha {:.4f}, data {:.4f}, batch {:.4f}'.format(
+            self.losses.avg, self.top1.avg, self.alpha.avg, self.data_time.avg, self.batch_time.avg
         )
 
 if __name__ == '__main__':
