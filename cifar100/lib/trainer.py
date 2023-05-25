@@ -95,6 +95,7 @@ class trainManager(object):
             if epoch > self.args.warm:
                 self.scheduler.step()
             train_accu, train_loss = self.train(epoch)
+            breakpoint()
             val_accu, val_loss = self.validate(epoch)
 
             is_best = val_accu > self.best_prec
