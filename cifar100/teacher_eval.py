@@ -18,7 +18,7 @@ def parse_args():
     parser.add_argument('--img_w', type=int, default=32)
     parser.add_argument('--train_file', type=str, default='data/cifar100_train.txt')
     parser.add_argument('--val_file', type=str, default='data/cifar100_val.txt')
-    parser.add_argument('--file_prefix', type=str, default='/home/xuanli/Data/CIFAR100')
+    parser.add_argument('--file_prefix', type=str, default='/home/../Data/CIFAR100')
     parser.add_argument('--write_name', type=str, default='kd')
     parser.add_argument('--batch_size', type=int, default=256)
     parser.add_argument('--device', type=str, choices=['cpu', 'cuda', 'cuda:0', 'cuda:1'], default='cuda:1')

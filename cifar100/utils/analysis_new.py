@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Knowledge_agreement')
-    parser.add_argument('--file_path_teacher', type=str, default='/home/xuanli/Knowledge_agreement/data/cifar100_val_kd.txt')
-    parser.add_argument('--file_path_student', type=str, default='/home/xuanli/Knowledge_agreement/data/cifar100_val_student.txt')
+    parser.add_argument('--file_path_teacher', type=str, default='/home/../Knowledge_agreement/data/cifar100_val_kd.txt')
+    parser.add_argument('--file_path_student', type=str, default='/home/../Knowledge_agreement/data/cifar100_val_student.txt')
     args = parser.parse_args()
     return args
 

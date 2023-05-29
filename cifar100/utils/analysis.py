@@ -4,8 +4,8 @@ import pandas as pd
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Knowledge_agreement')
-    parser.add_argument('--file_path_teacher', type=str, default='/home/xuanli/Knowledge_agreement/data/cifar100_train_kd.txt')
-    parser.add_argument('--file_path_student', type=str, default='/home/xuanli/Knowledge_agreement/data/cifar100_train_student.txt')
+    parser.add_argument('--file_path_teacher', type=str, default='/home/../Knowledge_agreement/data/cifar100_train_kd.txt')
+    parser.add_argument('--file_path_student', type=str, default='/home/../Knowledge_agreement/data/cifar100_train_student.txt')
     parser.add_argument('--percentile', type=float, default=0.05, help='choose top percentile')
     args = parser.parse_args()
     return args
