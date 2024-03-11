@@ -1,5 +1,5 @@
 # TGeo-KD
-This repository contains the preprint and code for Less or More From Teacher: Exploiting Trilateral Geometry For Knowledge Distillation (ICLR 2024).
+This repository contains the preprint and code for the paper "Less or More From Teacher: Exploiting Trilateral Geometry For Knowledge Distillation" (ICLR 2024).
 ## Installation
 ```
 pip install torch
