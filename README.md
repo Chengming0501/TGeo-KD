@@ -1,4 +1,42 @@
-# TGeo-KD [Submission to ICLR 2024]
-Less or More From Teacher: Exploiting Trilateral Geometry For Knowledge Distillation
-# Abstract
-Knowledge distillation aims to train a compact student network using soft supervision from a larger teacher network and hard supervision from ground truths. However, determining an optimal knowledge fusion ratio that balances these supervisory signals remains challenging. Prior methods generally resort to a constant or heuristic-based fusion ratio, which often falls short of a proper balance. In this study, we introduce a novel adaptive method for learning a sample-wise knowledge fusion ratio, exploiting both the correctness of teacher and student, as well as how well the student mimics the teacher on each sample. Our method naturally leads to the intra-sample trilateral geometric relations among the student prediction ($\mathcal{S}$), teacher prediction ($\mathcal{T}$), and ground truth ($\mathcal{G}$). To counterbalance the impact of outliers, we further extend to the inter-sample relations, incorporating the teacher's global average prediction ($\mathcal{\bar{T}})$ for samples within the same class.  A simple neural network then learns the implicit mapping from the intra- and inter-sample relations to an adaptive, sample-wise knowledge fusion ratio in a bilevel-optimization manner. Our approach provides a simple, practical, and adaptable solution for knowledge distillation that can be employed across various architectures and model sizes. Extensive experiments demonstrate consistent improvements over other loss re-weighting methods on image classification, attack detection, and click-through rate prediction.
+# TGeo-KD
+This repository contains the preprint and code for Less or More From Teacher: Exploiting Trilateral Geometry For Knowledge Distillation (ICLR 2024).
+## Installation
+```
+pip install torch
+````
+## Reproducing Results
+Data preparation:
+
+You can download the dataset under the `data` floder through the link provided in our paper available [here](https://arxiv.org/abs/2312.15112). For HIL and Criteo datasets, you may need to perform data normalization and random oversampling as the steps of the data pre-processing. 
+
+Pre-train the teacher network:
+````
+python vanilla_kd.py
+````
+
+To run all baselines:
+```
+python baseline_ADA.py
+python baseline_ANL.py
+python baseline_RW.py
+python baseline_WLS.py
+````
+To run TGeo-KD:
+```
+python fusion_ratio_bilevel.py
+````
+Hyperparameter settings:
+
+The settings of main hyperparameters can be found in our Appendix available [here](https://arxiv.org/abs/2312.15112). Please note that optimal hyperparameters may vary due to differences in the dataset partition.
+
+## Reference
+Please cite our paper if you use the core code of TGeo-KD.
+
+```
+@inproceedings{hu2023less,
+  title={Less or More From Teacher: Exploiting Trilateral Geometry For Knowledge Distillation},
+  author={Hu, Chengming and Wu, Haolun and Li, Xuan and Ma, Chen and Chen, Xi and Wang, Boyu and Yan, Jun and Liu, Xue},
+  booktitle={The Twelfth International Conference on Learning Representations},
+  year={2023}
+}
+```
