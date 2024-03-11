@@ -7,7 +7,7 @@ pip install torch
 ## Reproducing Results
 Data preparation:
 
-You can download the dataset under the `data` floder through the link provided in our paper available [here](https://arxiv.org/abs/2312.15112). For HIL and Criteo datasets, you may need to perform data normalization and random oversampling as the steps of the data pre-processing. 
+You can download the dataset under the `data` folder through the link provided in our paper available [here](https://arxiv.org/abs/2312.15112). For HIL and Criteo datasets, you may need to perform data normalization and random oversampling as the steps of the data pre-processing. 
 
 Pre-train the teacher network:
 ````
